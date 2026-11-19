@@ -38,3 +38,7 @@ The terminal prints LAN addresses. Open `http://<laptop-wifi-ip>:3000` on every 
 - Local HTTPS (mkcert) for Wake Lock / PWA
 - Optional cloud deployment (Fly.io/Railway) as fallback
 - Ableton Link would be the theoretical best sync but needs native apps
+
+## v2 features
+Setlist (saved to `setlist.json`), count-in bars, tap tempo, per-device settings (volume, sound, accent-only, eighth subdivisions, flash, trim), and leader-only control behind a PIN.
+Set the PIN: PowerShell `$env:PIN="4321"; npm start` (default `1234`). Anyone can view; only unlocked leaders can start/stop and edit the setlist.
