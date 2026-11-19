@@ -1,139 +1,151 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Band Click</title>
 <style>
-:root{--bg:#fff;--fg:#111;--card:#f2f2f2;--acc:#d33}
-@media (prefers-color-scheme:dark){:root{--bg:#111;--fg:#eee;--card:#222}}
-body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,sans-serif;padding:16px;max-width:480px;margin:auto}
-h1{font-size:20px}
-label{display:block;margin:12px 0 4px;font-size:14px}
-input{width:100%;box-sizing:border-box;font-size:22px;padding:10px;border-radius:8px;border:1px solid #888;background:var(--card);color:var(--fg)}
-button{width:100%;font-size:22px;padding:16px;margin-top:14px;border:0;border-radius:10px;background:var(--acc);color:#fff}
-button.grey{background:#555}
-#flash{height:70px;border-radius:10px;background:var(--card);margin-top:14px;text-align:center;line-height:70px;font-size:28px}
-#status{margin-top:12px;font-size:14px;line-height:1.5}
-</style>
-</head>
-<body>
-<h1>Band Click</h1>
-<button id="audio">1. Enable audio</button>
-<label>BPM</label><input id="bpm" type="number" value="120" inputmode="decimal">
-<label>Beats per bar</label><input id="bpb" type="number" value="4" inputmode="numeric">
-<label>My latency trim (ms, + = later)</label><input id="trim" type="number" value="0" inputmode="numeric">
-<button id="go">2. Start for everyone</button>
-<button id="stop" class="grey">Stop for everyone</button>
-<div id="flash">–</div>
-<div id="status"></div>
+:root{--bg:#0f1115;--card:#181b22;--fg:#f1f3f7;--mut:#8b93a3;--acc:#ff4d4d;--ok:#3ecf8e;--line:#2a2f3a;--in:#0f1218;color-scheme:dark}
+@media(prefers-color-scheme:light){:root{--bg:#f3f4f7;--card:#fff;--fg:#14161a;--mut:#667085;--line:#e1e4ea;--in:#f3f4f7;color-scheme:light}}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px system-ui,sans-serif;transition:background .08s}
+body.flash{background:var(--acc)}
+.wrap{max-width:1000px;margin:auto;padding:14px}
+header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+h1{font-size:20px;margin:0}
+#st{font-size:13px;color:var(--mut);display:flex;align-items:center;gap:6px}
+.dot{width:9px;height:9px;border-radius:50%;background:#777;display:inline-block}.dot.ok{background:var(--ok)}
+.grid,.stack{display:grid;gap:14px}.stack{min-width:0}
+.add input,.add select{min-width:0}
+@media(min-width:860px){.grid{grid-template-columns:1.1fr 1fr;align-items:start}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+.card h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin:0 0 12px}
+.now{text-align:center}
+#phase{font-size:12px;letter-spacing:.15em;color:var(--mut)}
+#song{font-size:24px;font-weight:700;margin:6px 0}
+#beat{font-size:clamp(90px,26vw,170px);font-weight:800;line-height:1;margin:6px 0}
+#dots{display:flex;gap:8px;justify-content:center;margin:8px 0}
+#dots i{width:14px;height:14px;border-radius:50%;background:var(--line)}#dots i.on{background:var(--acc)}
+#bpm{font-size:34px;font-weight:700}#meta{color:var(--mut);font-size:14px;margin-top:4px}
+button{font:inherit;border:0;border-radius:12px;padding:14px;background:var(--line);color:var(--fg);cursor:pointer}
+button.p{background:var(--acc);color:#fff;font-weight:700}
+.row{display:flex;gap:10px;margin-top:14px}.row button{flex:1}
+#audio{width:100%;margin-bottom:12px;background:var(--acc);color:#fff;font-weight:700;padding:16px}
+input,select{font:inherit;width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--in);color:var(--fg)}
+label{display:block;font-size:13px;color:var(--mut);margin:12px 0 4px}
+label.c{display:flex;align-items:center;gap:10px;color:var(--fg);font-size:15px}label.c input{width:auto}
+ul{list-style:none;margin:0;padding:0}
+li{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;border:1px solid transparent}
+li.cur{background:var(--in);border-color:var(--acc)}
+li .nm{flex:1;font-weight:600}.mut{color:var(--mut);font-size:13px}
+li .btns{display:flex;gap:4px}li .btns button{padding:6px 10px}
+.add{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.add .w{grid-column:1/-1}
+.add>div{display:flex;gap:6px}.add>div input{flex:1}
+details summary{cursor:pointer;color:var(--mut);font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+</style></head>
+<body><div class="wrap">
+<header><h1>🥁 Band Click</h1><div id="st"></div></header>
+<button id="audio">Tap to enable audio</button>
+<div class="grid">
+ <div class="card now">
+  <div id="phase">STOPPED</div><div id="song">–</div>
+  <div id="beat">–</div><div id="dots"></div>
+  <div><span id="bpm">--</span> <span class="mut">BPM</span></div><div id="meta"></div>
+  <div class="row lead" hidden><button id="go" class="p">Start</button><button id="stop">Stop</button></div>
+  <div class="mut" id="wait" style="margin-top:14px">Waiting for the leader to start</div>
+ </div>
+ <div class="stack">
+  <div class="card"><h2>Setlist</h2><ul id="list"></ul>
+   <div class="add lead" hidden>
+    <input class="w" id="nm" placeholder="Song name">
+    <div><input id="nbpm" type="number" placeholder="BPM" value="120" inputmode="numeric"><button id="tap">Tap</button></div>
+    <input id="nbpb" type="number" placeholder="Beats/bar" value="4" inputmode="numeric">
+    <select id="nci"><option value="0">No count-in</option><option value="1" selected>1 bar count-in</option><option value="2">2 bars count-in</option><option value="4">4 bars count-in</option></select>
+    <button id="add" class="p">Add song</button>
+   </div>
+  </div>
+  <div class="card" id="unlock"><h2>Leader</h2>
+   <div class="row" style="margin:0"><input id="pin" type="password" placeholder="Leader PIN" inputmode="numeric"><button id="unlockBtn" class="p" style="flex:0 0 auto">Unlock</button></div>
+   <div class="mut" id="pinerr" style="margin-top:8px"></div></div>
+  <div class="card"><details open><summary>My settings (this device only)</summary>
+   <label>Volume</label><input id="vol" type="range" min="0" max="1" step=".05">
+   <label>Sound</label><select id="snd"><option value="beep">Beep</option><option value="wood">Wood</option><option value="tick">Tick</option></select>
+   <label>Latency trim (ms, + = later)</label><input id="trim" type="number" inputmode="numeric">
+   <label class="c"><input id="acc" type="checkbox">Accent only (beat 1)</label>
+   <label class="c"><input id="sub" type="checkbox">Eighth-note subdivisions</label>
+   <label class="c"><input id="fl" type="checkbox">Flash screen on beat 1</label>
+  </details></div>
+ </div>
+</div></div>
 <script>
-const $ = id => document.getElementById(id);
-let ws, ctx = null, offset = null, state = null, idx = 0, count = 1, rtt = null;
-let pid = 0; const pending = {};
-const sleep = ms => new Promise(r => setTimeout(r, ms));
-const serverNow = () => performance.now() + offset;
+const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let ws,ctx=null,offset=null,rtt=null,idx=null,leader=false,tried=false,pid=0;const pend={};
+let S={click:null,songs:[],current:0,n:1};
+let cfg={vol:.8,sound:'beep',accentOnly:false,subdiv:false,flash:true,trim:0};
+try{Object.assign(cfg,JSON.parse(localStorage.getItem('bc')||'{}'))}catch{}
+const saveCfg=()=>{try{localStorage.setItem('bc',JSON.stringify(cfg))}catch{}};
+const send=o=>ws&&ws.readyState===1&&ws.send(JSON.stringify(o));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms)),sn=()=>performance.now()+offset;
 
-function status() {
-  $('status').innerHTML =
-    (ws && ws.readyState === 1 ? 'Connected' : 'Connecting…') + ' · devices: ' + count +
-    '<br>Clock sync: ' + (offset === null ? 'measuring…' : 'best round trip ' + rtt.toFixed(1) + ' ms') +
-    '<br>Audio: ' + (ctx && ctx.state === 'running' ? 'on' : 'tap “Enable audio”') +
-    '<br>' + (state ? 'Running at ' + state.bpm + ' BPM' : 'Stopped');
-}
+// settings
+$('vol').value=cfg.vol;$('snd').value=cfg.sound;$('trim').value=cfg.trim;$('acc').checked=cfg.accentOnly;$('sub').checked=cfg.subdiv;$('fl').checked=cfg.flash;
+$('vol').oninput=e=>{cfg.vol=+e.target.value;saveCfg()};$('snd').onchange=e=>{cfg.sound=e.target.value;saveCfg()};
+$('trim').oninput=e=>{cfg.trim=+e.target.value||0;saveCfg()};$('acc').onchange=e=>{cfg.accentOnly=e.target.checked;saveCfg()};
+$('sub').onchange=e=>{cfg.subdiv=e.target.checked;saveCfg()};$('fl').onchange=e=>{cfg.flash=e.target.checked;saveCfg()};
 
-function ping() {
-  return new Promise(res => {
-    const id = ++pid; pending[id] = res;
-    ws.send(JSON.stringify({ type: 'ping', id }));
-    setTimeout(() => { if (pending[id]) { delete pending[id]; res(null); } }, 1000);
-  });
-}
+// network + clock sync
+function ping(){return new Promise(r=>{const id=++pid;pend[id]=r;send({type:'ping',id});setTimeout(()=>{if(pend[id]){delete pend[id];r(null)}},1000)})}
+async function sync(){const s=[];for(let i=0;i<30;i++){const t0=performance.now(),r=await ping(),t1=performance.now();if(r)s.push({rtt:t1-t0,off:r.ts-(t0+t1)/2});await sleep(15)}
+ if(s.length<5)return;s.sort((a,b)=>a.rtt-b.rtt);const b=s.slice(0,5),o=b.map(x=>x.off).sort((a,b)=>a-b)[2];
+ offset=offset===null?o:offset+.3*(o-offset);rtt=b[0].rtt;status()}
+function connect(){ws=new WebSocket((location.protocol==='https:'?'wss':'ws')+'://'+location.host);
+ ws.onopen=()=>{status();sync();let p=null;try{p=sessionStorage.getItem('pin')}catch{}if(p)send({type:'auth',pin:p})};
+ ws.onclose=()=>{status();setTimeout(connect,1000)};
+ ws.onmessage=e=>{const m=JSON.parse(e.data);
+  if(m.type==='pong'){const f=pend[m.id];if(f){delete pend[m.id];f(m)}}
+  else if(m.type==='auth'){leader=m.ok;$('pinerr').textContent=!m.ok&&tried?'Wrong PIN':'';render()}
+  else if(m.type==='state'){S=m;idx=null;render()}}}
 
-async function sync() {
-  const s = [];
-  for (let i = 0; i < 30; i++) {
-    const t0 = performance.now();
-    const r = await ping();
-    const t1 = performance.now();
-    if (r) s.push({ rtt: t1 - t0, off: r.ts - (t0 + t1) / 2 });
-    await sleep(15);
-  }
-  if (s.length < 5) return;
-  s.sort((a, b) => a.rtt - b.rtt);
-  const best = s.slice(0, 5);
-  const off = best.map(x => x.off).sort((a, b) => a - b)[2];
-  offset = offset === null ? off : offset + 0.3 * (off - offset);
-  rtt = best[0].rtt;
-  status();
-}
+// audio
+const SND={beep:['sine',1600,1000,.05,1],wood:['triangle',1300,850,.035,1],tick:['square',2600,1900,.02,.4]};
+function beep(t,k){const[ty,hi,lo,d,g0]=SND[cfg.sound]||SND.beep,o=ctx.createOscillator(),g=ctx.createGain(),v=cfg.vol*g0*(k==='s'?.5:1);
+ o.type=ty;o.frequency.value=k==='a'?hi:lo;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.002);g.gain.exponentialRampToValueAtTime(.001,t+d);
+ o.connect(g).connect(ctx.destination);o.start(t);o.stop(t+d+.01)}
+function showBeat(n,ci){$('beat').textContent=n;$('phase').textContent=ci?'COUNT-IN':'PLAYING';
+ [...$('dots').children].forEach((d,i)=>d.classList.toggle('on',i===n-1));
+ if(cfg.flash&&n===1){document.body.classList.add('flash');setTimeout(()=>document.body.classList.remove('flash'),110)}}
+function tick(){const c=S.click;if(!c||!ctx||ctx.state!=='running'||offset===null)return;
+ const spb=60000/c.bpm;if(idx===null)idx=Math.max(0,Math.ceil((sn()+150-c.startAt)/spb));
+ let aC=ctx.currentTime,aP=performance.now();
+ if(ctx.getOutputTimestamp){const o=ctx.getOutputTimestamp();if(o.contextTime>0&&o.performanceTime>0){aC=o.contextTime;aP=o.performanceTime}}
+ const toC=ms=>aC+((ms-offset)-aP)/1000+cfg.trim/1000;
+ for(;;){const t=toC(c.startAt+idx*spb);if(t>ctx.currentTime+.15)break;
+  if(t>=ctx.currentTime-.01){const b=idx%c.bpb,ci=idx<c.countIn;
+   if(!cfg.accentOnly||b===0)beep(t,b===0?'a':'b');
+   if(cfg.subdiv&&!cfg.accentOnly)beep(toC(c.startAt+(idx+.5)*spb),'s');
+   setTimeout(()=>{if(S.click===c)showBeat(b+1,ci)},Math.max(0,(t-ctx.currentTime)*1000))}
+  idx++}}
 
-function connect() {
-  ws = new WebSocket((location.protocol === 'https:' ? 'wss' : 'ws') + '://' + location.host);
-  ws.onopen = () => { status(); sync(); };
-  ws.onclose = () => { status(); setTimeout(connect, 1000); };
-  ws.onmessage = e => {
-    const m = JSON.parse(e.data);
-    if (m.type === 'pong') { const f = pending[m.id]; if (f) { delete pending[m.id]; f(m); } }
-    else if (m.type === 'count') { count = m.n; status(); }
-    else if (m.type === 'state') {
-      state = m.state;
-      if (state && offset !== null) {
-        const spb = 60000 / state.bpm;
-        idx = Math.max(0, Math.ceil((serverNow() + 150 - state.startAt) / spb));
-      }
-      if (!state) $('flash').textContent = '–';
-      status();
-    }
-  };
-}
+// UI
+function status(){const ok=ws&&ws.readyState===1;
+ $('st').innerHTML=`<b class="dot ${ok?'ok':''}"></b>${ok?'Connected':'Connecting…'} · ${S.n} device${S.n==1?'':'s'} · sync ${offset===null?'…':rtt.toFixed(1)+' ms'}`;
+ $('audio').hidden=!!(ctx&&ctx.state==='running')}
+function render(){const s=S.songs[S.current],c=S.click;
+ $('song').textContent=s?s.name:'No song loaded';$('bpm').textContent=s?s.bpm:'--';
+ $('meta').textContent=s?`${s.bpb} beats/bar`+(s.countIn?` · ${s.countIn}-bar count-in`:''):'The leader adds songs to the setlist';
+ const bp=c?c.bpb:s?s.bpb:4;if($('dots').children.length!==bp)$('dots').innerHTML='<i></i>'.repeat(bp);
+ $('beat').style.opacity=c?1:.15;
+ if(!c){$('beat').textContent='–';$('phase').textContent='STOPPED';[...$('dots').children].forEach(d=>d.classList.remove('on'))}
+ document.querySelectorAll('.lead').forEach(e=>e.hidden=!leader);$('unlock').hidden=leader;$('wait').hidden=leader;
+ $('list').innerHTML=S.songs.map((x,i)=>`<li data-i="${i}" class="${i===S.current?'cur':''}"><span class="nm">${esc(x.name)}</span><span class="mut">${x.bpm} BPM · ${x.bpb}/bar</span>`+
+  (leader?`<span class="btns"><button data-a="up">↑</button><button data-a="dn">↓</button><button data-a="del">✕</button></span>`:'')+'</li>').join('')||'<li class="mut">Setlist is empty</li>';
+ status()}
+$('list').onclick=e=>{if(!leader)return;const li=e.target.closest('li[data-i]');if(!li)return;const i=+li.dataset.i,a=e.target.dataset.a;
+ if(a==='del')send({type:'del',i});else if(a==='up')send({type:'move',i,d:-1});else if(a==='dn')send({type:'move',i,d:1});else send({type:'select',i})};
+$('audio').onclick=async()=>{if(!ctx)ctx=new(window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive'});await ctx.resume();status()};
+$('go').onclick=()=>send({type:'start'});$('stop').onclick=()=>send({type:'stop'});
+$('unlockBtn').onclick=()=>{const p=$('pin').value;tried=true;try{sessionStorage.setItem('pin',p)}catch{}send({type:'auth',pin:p})};
+$('add').onclick=()=>{send({type:'add',name:$('nm').value||'Song',bpm:$('nbpm').value,bpb:$('nbpb').value,countIn:$('nci').value});$('nm').value=''};
+let taps=[];$('tap').onclick=()=>{const t=performance.now();if(taps.length&&t-taps[taps.length-1]>2000)taps=[];taps=[...taps,t].slice(-8);
+ if(taps.length>1)$('nbpm').value=Math.round(60000/((taps[taps.length-1]-taps[0])/(taps.length-1)))};
 
-function click(t, accent) {
-  const o = ctx.createOscillator(), g = ctx.createGain();
-  o.frequency.value = accent ? 1600 : 1000;
-  g.gain.setValueAtTime(0, t);
-  g.gain.linearRampToValueAtTime(0.9, t + 0.002);
-  g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
-  o.connect(g).connect(ctx.destination);
-  o.start(t); o.stop(t + 0.06);
-}
-
-function tick() {
-  if (!state || !ctx || ctx.state !== 'running' || offset === null) return;
-  // map performance clock -> audio clock (accounts for output latency where supported)
-  let aCtx = ctx.currentTime, aPerf = performance.now();
-  if (ctx.getOutputTimestamp) {
-    const ts = ctx.getOutputTimestamp();
-    if (ts.contextTime > 0 && ts.performanceTime > 0) { aCtx = ts.contextTime; aPerf = ts.performanceTime; }
-  }
-  const trim = (+$('trim').value || 0) / 1000;
-  const toCtx = ms => aCtx + ((ms - offset) - aPerf) / 1000 + trim;
-  const spb = 60000 / state.bpm;
-  for (;;) {
-    const t = toCtx(state.startAt + idx * spb);
-    if (t > ctx.currentTime + 0.15) break;
-    if (t >= ctx.currentTime - 0.01) {
-      const beat = idx % state.bpb;
-      click(t, beat === 0);
-      const n = beat + 1;
-      setTimeout(() => { if (state) $('flash').textContent = n; }, Math.max(0, (t - ctx.currentTime) * 1000));
-    }
-    idx++;
-  }
-}
-
-$('audio').onclick = async () => {
-  if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' });
-  await ctx.resume();
-  status();
-};
-$('go').onclick = () => ws.send(JSON.stringify({ type: 'start', bpm: $('bpm').value, bpb: $('bpb').value }));
-$('stop').onclick = () => ws.send(JSON.stringify({ type: 'stop' }));
-
-connect();
-setInterval(tick, 25);
-setInterval(() => { if (ws.readyState === 1) sync(); }, 15000);
-status();
-</script>
-</body>
-</html>
+connect();render();setInterval(tick,25);setInterval(()=>{if(ws.readyState===1)sync()},15000);
+</script></body></html>
